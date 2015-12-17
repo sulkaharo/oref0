@@ -16,8 +16,9 @@ oref0-normalize-temps $HISTORY  \
   | json -e "this.created_at = this.created_at ? this.created_at : this.timestamp" \
   | json -e "this.enteredBy = 'openaps://medtronic/$model'" \
   | json -e "if (this.glucose && !this.glucoseType && this.glucose > 0) { this.glucoseType = this.enteredBy }" \
+  | json -e "if (this._type == 'BGReceived') { this.eventType : 'BG Check'); this.bg = this.amount; }" \
+  | json -e "if (this._type == 'Bolus') { this.eventType : 'Correction Bolus'); this.insulin = this.amount; }" \
   | json -e "this.eventType = (this.eventType ?  this.eventType : 'Note')" \
   | json -e "if (this.eventType == 'Note') { this.notes = this._type + ' $model ' + (this.notes ? this.notes : '')}" \
   | json > $OUTPUT
-
 
