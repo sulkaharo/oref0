@@ -40,12 +40,15 @@
     "ns-status": "./bin/ns-status.js",
     "nightscout": "./bin/nightscout.sh",
     "ns-dedupe-treatments": "./bin/ns-dedupe-treatments.sh",
-    "oref0-pebble": "./bin/oref0-pebble.js"
+    "oref0-pebble": "./bin/oref0-pebble.js",
+    "oref0-mm-format-ns-treatments": "./bin/oref0-mm-format-ns-treatments.js"
   },
   "homepage": "https://github.com/openaps/oref0",
   "dependencies": {
     "share2nightscout-bridge": "^0.1.5",
-    "timezone": "0.0.47"
+    "timezone": "0.0.47",
+	"lodash": "^3.9.1",
+    "moment": "2.10.6"
   },
   "devDependencies": {
     "mocha": "^2.3.3",
