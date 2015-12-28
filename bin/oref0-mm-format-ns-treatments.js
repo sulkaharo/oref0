@@ -48,26 +48,39 @@ if (!module.parent) {
 	
 	// Sort events by priority, so merging will always have the right top event
 	
+	var rank = {
+	"Bolus" : 1,
+	'Meal Bolus': 1,
+	"Temp Basal" : 2,
+	"TempBasal" : 2,
+	"BGReceived" : 3,
+	"CalBGForPH" : 4,
+	"BG Check": 4,
+	"BolusWizard" : 5,
+	"BasalProfileStart" : 6,
+	"TempBasalDuration" : 7
+	};
+
+	
 	_.sortBy(treatments,function(event) {
-		var rank = {
-        "Bolus" : 1,
-        "TempBasal" : 2,
-        "BGReceived" : 3,
-        "CalBGForPH" : 4,
-        "BolusWizard" : 5,
-        "BasalProfileStart" : 6,
-        "TempBasalDuration" : 7
-    	};
+
+		// Fix some wrongly mapped event types
+		// TODO: figure out why the event types are wrong in the first place
+		if (event.eventType == '<none>') {
+			if (event.insulin) { event.eventType = 'Bolus'; }
+			if (event._type == 'CalBGForPH') { event.eventType = 'BG Check'; }
+		}
 		
+		var type = event.eventType ? event.eventType : event._type;
 		return rank[event._type] ? rank[event._type] : 8;
 		
 	});
     
-    _.forEachRight(treatments,function(n) {
+    _.forEach(treatments,function(n) {
 
 		// filter out events if timestamp was defined
 
-    	var eventTime = moment(n.timestamp);    
+    	var eventTime = moment(n.timestamp); 
 		if (last_time && !eventTime.isAfter(last_time)) { return; }
 
 		// filter out undesired event types
@@ -93,10 +106,10 @@ if (!module.parent) {
     	 _.forEachRight(processed,function(m) {
     	 	var event2Time = moment(m.timestamp);
     	 	
-    	 	if (eventTime.diff(event2Time) <= 60*1000) {
+    	 	if (Math.abs(eventTime.diff(event2Time)) <= 60*1000) {
     	 		foundEventToMergeWith = m;
   	 		}
-    		 });
+    	});
     	
     	// contain all source objects inside the processed objects
     	
@@ -116,6 +129,13 @@ if (!module.parent) {
     	}
 
     });
+    
+    // Sort by timestamp for upload
+    
+    _.sortBy(processed, function(event) {
+    	//element will be each array, so we just return a date from first element in it
+    	return event.timestamp;
+	});
 
 	console.log(JSON.stringify(processed, null, 2));
 
