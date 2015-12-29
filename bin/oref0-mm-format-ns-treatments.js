@@ -96,6 +96,7 @@ if (!module.parent) {
   		if (n._type == "Bolus" && n.amount && !n.insulin) { this.eventType = 'Correction Bolus'; n.insulin = n.amount;}
   		if (n.carb_input && !n.carbs) {n.carbs = n.carb_input;}
   		if (n.bg == 0) { delete n.bg; } // delete 0 BG
+		if (n.bg) { n.units = 'mgdl'; }  // everything from Decocare should be in mg/dl
   		if (n._type == 'CalBGForPH' || n._type == 'BGReceived') { n.type = 'BG Check'; this.bg = this.amount; }
   		if (n.eventType == 'Note') { n.notes = n._type + pump_model_data + (n.notes ? n.notes : '');}
 
