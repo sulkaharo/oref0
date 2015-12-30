@@ -28,18 +28,24 @@ if (!module.parent) {
     
     var pump_history = process.argv.slice(2, 3).pop();
     var pump_model = process.argv.slice(3, 4).pop();
-    var last_time = process.argv.slice(4, 5).pop();
+    var pump_status = process.argv.slice(4, 5).pop();
+    var last_time = process.argv.slice(5, 6).pop();
     
     if (last_time) { last_time = moment(last_time); }
     
     if (!pump_history || !pump_model) {
-        console.log('usage: ', process.argv.slice(0, 2), '<pump_history.json> <pump_model.json> [filter_time]');
+        console.log('usage: ', process.argv.slice(0, 2), '<pump_history.json> <pump_model.json> <pump_status.json> [filter_time]');
         process.exit(1);
     }
     
     var cwd = process.cwd();
     var pump_history_data = require(cwd + '/' + pump_history);
     var pump_model_data = require(cwd + '/' + pump_model);
+    var pump_status_data = require(cwd + '/' + pump_status);
+
+	// don't process events during a bolus, due to Bolus Wizard events split to multiple events
+
+	if (pump_status_data.bolusing != false) return;
 
 	var treatments = find_insulin(find_bolus(pump_history_data));
 	treatments = describe_pump(treatments);
@@ -61,7 +67,6 @@ if (!module.parent) {
 	"TempBasalDuration" : 7
 	};
 
-	
 	_.sortBy(treatments,function(event) {
 
 		// Fix some wrongly mapped event types
@@ -82,10 +87,24 @@ if (!module.parent) {
 
     	var eventTime = moment(n.timestamp); 
 		if (last_time && !eventTime.isAfter(last_time)) { return; }
+		
+		// To prevent multi-part events from being uploaded in parts, do not process events that are 
+		// more recent than 60 seconds old. which can't also be merged to something older
+
+		if (moment().diff(eventTime,'seconds') < -60) {
+			var foundRecentMergeableEvent = false;
+			 _.forEach(treatments,function(n) {
+			 	if (eventTime.diff(moment(n.timestamp)) <= -60) { foundRecentMergeableEvent = true; }
+			 });
+			 
+			 if (!foundRecentMergeableEvent) { return; }
+		}
 
 		// filter out undesired event types
 
     	if (_.includes(ignoreEventTypes,n._type)) { return; }
+
+		// TODO: add support for "Prime" event -> site change?
 
 		// data correction to match Nightscout expectations
 
@@ -95,7 +114,7 @@ if (!module.parent) {
   		if (n.carb_input && !n.carbs) {n.carbs = n.carb_input;}
   		if (n.bg == 0) { delete n.bg; } // delete 0 BG
 		if (n.bg) { n.units = 'mgdl'; n.glucose = n.bg; }  // everything from Decocare should be in mg/dl
-  		if (n._type == 'CalBGForPH' || n._type == 'BGReceived') { n.type = 'BG Check'; this.glucose = this.amount; }
+  		if (n._type == 'CalBGForPH' || n._type == 'BGReceived') { n.eventType = 'BG Check'; this.glucose = this.amount; }
   		if (n.glucose && !n.glucoseType && n.glucose > 0) { n.glucoseType = n.enteredBy; }
   		n.eventType = (n.eventType ? n.eventType : 'Note');
   		if (n.eventType == 'Note') { n.notes = n._type + pump_model_data + (n.notes ? n.notes : '');}
