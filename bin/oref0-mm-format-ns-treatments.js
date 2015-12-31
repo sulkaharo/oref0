@@ -24,6 +24,10 @@ var describe_pump = require('oref0/lib/pump');
 
 var ignoreEventTypes = ['BasalProfileStart'];
 
+function isTempBasal(event) {
+	return (event._type == 'TempBasalDuration' || event._type == 'TempBasal');
+}
+
 if (!module.parent) {
     
     var pump_history = process.argv.slice(2, 3).pop();
@@ -127,7 +131,12 @@ if (!module.parent) {
     	 	var event2Time = moment(m.timestamp);
     	 	
     	 	if (Math.abs(eventTime.diff(event2Time)) <= 60*1000) {
-    	 		foundEventToMergeWith = m;
+    	 		
+    	 		// only merge Temp Basals with Temp Basals
+    	 		
+    	 		if (isTempBasal(n) && !isTempBasal(m)) { return; }
+	    	 	
+	    	 	foundEventToMergeWith = m;	 			
   	 		}
     	});
     	
