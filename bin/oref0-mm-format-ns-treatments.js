@@ -43,7 +43,12 @@ if (!module.parent) {
     }
     
     var cwd = process.cwd();
-    var pump_history_data = require(cwd + '/' + pump_history);
+//    var pump_history_data = require(cwd + '/' + pump_history);
+
+	var fs = require("fs");
+	var contents = fs.readFileSync(cwd + '/' + pump_history, "utf8");
+	var pump_history_data = JSON.parse(contents.replace("2000-","2016-"));
+
     var pump_model_data = require(cwd + '/' + pump_model);
     var pump_status_data = require(cwd + '/' + pump_status);
 
@@ -133,6 +138,7 @@ if (!module.parent) {
     	 	if (Math.abs(eventTime.diff(event2Time)) <= 60*1000) {
     	 		
     	 		// only merge Temp Basals with Temp Basals
+    	 		// TODO: make data driven - configure mergeable and/or unmergeable event combos
     	 		
     	 		if (isTempBasal(n) && !isTempBasal(m)) { return; }
 	    	 	
