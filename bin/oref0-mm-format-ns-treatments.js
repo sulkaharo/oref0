@@ -43,12 +43,7 @@ if (!module.parent) {
     }
     
     var cwd = process.cwd();
-//    var pump_history_data = require(cwd + '/' + pump_history);
-
-	var fs = require("fs");
-	var contents = fs.readFileSync(cwd + '/' + pump_history, "utf8");
-	var pump_history_data = JSON.parse(contents.replace("2000-","2016-"));
-
+    var pump_history_data = require(cwd + '/' + pump_history);
     var pump_model_data = require(cwd + '/' + pump_model);
     var pump_status_data = require(cwd + '/' + pump_status);
 
