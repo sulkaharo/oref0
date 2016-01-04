@@ -117,7 +117,9 @@ if (!module.parent) {
   		if (n._type == "Bolus" && n.amount && !n.insulin) { this.eventType = 'Correction Bolus'; n.insulin = n.amount;}
   		if (n.carb_input && !n.carbs) {n.carbs = n.carb_input;}
   		if (n.bg == 0) { delete n.bg; } // delete 0 BG
-		if (n.bg) { n.units = 'mgdl'; n.glucose = n.bg; }  // everything from Decocare should be in mg/dl
+  		if (n.glucose == 0) { delete n.glucose; } // delete 0 BG
+		if (n.bg && !n.glucose) { n.glucose = n.bg; }  // everything from Decocare should be in mg/dl
+		if ((n.bg || n.glucose) && !n.units) { n.units = 'mgdl'; }
   		if (n._type == 'CalBGForPH' || n._type == 'BGReceived') { n.eventType = 'BG Check'; this.glucose = this.amount; }
   		if (n.glucose && !n.glucoseType && n.glucose > 0) { n.glucoseType = n.enteredBy; }
   		n.eventType = (n.eventType ? n.eventType : 'Note');
