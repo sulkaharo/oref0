@@ -116,6 +116,7 @@ if (!module.parent) {
   		n.enteredBy = 'openaps://medtronic/' + pump_model_data;
   		if (n._type == "Bolus" && n.amount && !n.insulin) { this.eventType = 'Correction Bolus'; n.insulin = n.amount;}
   		if (n.carb_input && !n.carbs) {n.carbs = n.carb_input;}
+  		if (n.duration == 0) { delete n.duration; }
   		if (n.bg == 0) { delete n.bg; } // delete 0 BG
   		if (n.glucose == 0) { delete n.glucose; } // delete 0 BG
 		if (n.bg && !n.glucose) { n.glucose = n.bg; }  // everything from Decocare should be in mg/dl
