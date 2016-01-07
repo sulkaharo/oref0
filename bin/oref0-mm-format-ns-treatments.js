@@ -22,10 +22,22 @@ var find_insulin = require('oref0/lib/temps');
 var find_bolus = require('oref0/lib/bolus');
 var describe_pump = require('oref0/lib/pump');
 
-var ignoreEventTypes = ['BasalProfileStart'];
+var ignoreEventTypes = ['BasalProfileStart','Sara6E'];
+
+var basalEvents = ['TempBasalDuration','TempBasal'];
+
+var bolusEvents = ['Bolus','Meal Bolus', 'BolusWizard'];
 
 function isTempBasal(event) {
-	return (event._type == 'TempBasalDuration' || event._type == 'TempBasal');
+	return  _.indexOf(basalEvents,event._type);
+}
+
+function isBolusEvent(event) {
+	return  _.indexOf(bolusEvents,event._type);
+}
+
+function isMergeable(event1, event2) {
+	return ( (isTempBasal(event1) && isTempBasal(event2)) || (isBolusEvent(event1) && isBolusEvent(event2)));
 }
 
 if (!module.parent) {
@@ -56,6 +68,41 @@ if (!module.parent) {
 
 	var processed = [];
 	
+	// Filter useless events
+		
+	treatments = _.filter(treatments,function(event) {
+		var eventTime = moment(event.timestamp);
+		var isTooOld = (last_time && eventTime.isBefore(last_time));
+		var isIgnoreEvent = _.indexOf(ignoreEventTypes,event._type);
+		return (!isTooOld || !isIgnoreEvent);
+	});
+		
+	// If data contains a bolus event that is newer than 60 seconds
+	// and it cannot be merged with another event, filter out all events later than the bolus
+	
+	var lastBolus = _.findLast(treatments,function(event) {
+		return isBolusEvent(event);
+	});
+	
+	if (lastBolus && moment().diff(moment(lastBolus.timestamp)) < -60) {
+	
+		var foundRecentMergeableEvent = false;
+		_.forEach(treatments,function(n) {
+			if (eventTime.diff(moment(n.timestamp)) <= -60) {
+    	 		if (isMergeable(m,n)) { foundEventToMergeWith = true; }
+			}
+		});
+		
+		if (!foundEventToMergeWith) {
+			
+			var lastBolusTime = moment(lastBolus.timestamp);
+		
+			treatments = _.filter(treatments,function(event) {
+		 		return (moment(event.timestamp).isBefore(lastBolusTime) || event == lastBolus);
+			});
+		}
+	}
+		
 	// Sort events by priority, so merging will always have the right top event
 	
 	var rank = {
@@ -86,28 +133,7 @@ if (!module.parent) {
 	});
     
     _.forEach(treatments,function(n) {
-
-		// filter out events if timestamp was defined
-
-    	var eventTime = moment(n.timestamp); 
-		if (last_time && !eventTime.isAfter(last_time)) { return; }
 		
-		// To prevent multi-part events from being uploaded in parts, do not process events that are 
-		// more recent than 60 seconds old. which can't also be merged to something older
-
-		if (moment().diff(eventTime,'seconds') < -60) {
-			var foundRecentMergeableEvent = false;
-			 _.forEach(treatments,function(n) {
-			 	if (eventTime.diff(moment(n.timestamp)) <= -60) { foundRecentMergeableEvent = true; }
-			 });
-			 
-			 if (!foundRecentMergeableEvent) { return; }
-		}
-
-		// filter out undesired event types
-
-    	if (_.includes(ignoreEventTypes,n._type)) { return; }
-
 		// TODO: add support for "Prime" event -> site change?
 
 		// data correction to match Nightscout expectations
@@ -128,6 +154,8 @@ if (!module.parent) {
 
   		// merge events happening within 1 minute
     	
+    	var eventTime = moment(n.timestamp);
+    	
     	var foundEventToMergeWith = null;
     	
     	 _.forEachRight(processed,function(m) {
@@ -138,9 +166,8 @@ if (!module.parent) {
     	 		// only merge Temp Basals with Temp Basals
     	 		// TODO: make data driven - configure mergeable and/or unmergeable event combos
     	 		
-    	 		if (isTempBasal(n) && !isTempBasal(m)) { return; }
-	    	 	
-	    	 	foundEventToMergeWith = m;	 			
+    	 		if (isMergeable(m,n)) { foundEventToMergeWith = m; }
+	    	 	 			
   	 		}
     	});
     	
