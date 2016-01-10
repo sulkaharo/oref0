@@ -37,7 +37,7 @@ function isBolusEvent(event) {
 }
 
 function isMergeable(event1, event2) {
-	return ( (isTempBasal(event1) && isTempBasal(event2)) || (isBolusEvent(event1) && isBolusEvent(event2)));
+	return ( (isTempBasal(event1) && isTempBasal(event2)) || (isBolusEvent(event1) && isBolusEvent(event2)) && m != n);
 }
 
 if (!module.parent) {
