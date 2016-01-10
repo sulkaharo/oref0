@@ -29,15 +29,23 @@ var basalEvents = ['TempBasalDuration','TempBasal'];
 var bolusEvents = ['Bolus','Meal Bolus', 'BolusWizard'];
 
 function isTempBasal(event) {
-	return  _.indexOf(basalEvents,event._type);
+	return (_.indexOf(basalEvents,event._type) >= 0);
 }
 
 function isBolusEvent(event) {
-	return  _.indexOf(bolusEvents,event._type);
+	return (_.indexOf(bolusEvents,event._type) >= 0);
+}
+
+function isIgnorableEvent(event) {
+	return (_.indexOf(ignoreEventTypes,event._type) >= 0);
 }
 
 function isMergeable(event1, event2) {
 	return ( (isTempBasal(event1) && isTempBasal(event2)) || (isBolusEvent(event1) && isBolusEvent(event2)) && m != n);
+}
+
+function isMMOLevent(event) {
+	return ((event.enteredBy.indexOf('554') > 0) && event._type == 'BolusWizard');
 }
 
 if (!module.parent) {
@@ -72,9 +80,9 @@ if (!module.parent) {
 		
 	treatments = _.filter(treatments,function(event) {
 		var eventTime = moment(event.timestamp);
-		var isTooOld = (last_time && eventTime.isBefore(last_time));
-		var isIgnoreEvent = _.indexOf(ignoreEventTypes,event._type);
-		return (!isTooOld && !isIgnoreEvent);
+		if (last_time && eventTime.isBefore(last_time)) { return false; }
+		if (isIgnorableEvent(event)) { return false; }
+		return true;		
 	});
 		
 	// If data contains a bolus event that is newer than 60 seconds
@@ -147,7 +155,10 @@ if (!module.parent) {
   		if (n.carbs == 0) { delete n.carbs; }
   		if (n.glucose == 0) { delete n.glucose; }
 		if (n.bg && !n.glucose) { n.glucose = n.bg; }  // everything from Decocare should be in mg/dl
-		if ((n.bg || n.glucose) && !n.units) { n.units = 'mgdl'; }
+		if ((n.bg || n.glucose) && !n.units) {
+			if (isMMOLevent(n)) { n.units = 'mmol';} else { n.units = 'mgdl'; }
+		}
+		
   		if (n._type == 'CalBGForPH' || n._type == 'BGReceived') { n.eventType = 'BG Check'; this.glucose = this.amount; }
   		if (n.glucose && !n.glucoseType && n.glucose > 0) { n.glucoseType = n.enteredBy; }
   		n.eventType = (n.eventType ? n.eventType : 'Note');
