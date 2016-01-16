@@ -45,7 +45,7 @@ function isMergeable(event1, event2) {
 }
 
 function isMMOLevent(event) {
-	return ((event.enteredBy.indexOf('554') > 0) && event._type == 'BolusWizard');
+	return (event.enteredBy.indexOf('554') >= 0 && event.glucoseType == 'BolusWizard');
 }
 
 if (!module.parent) {
