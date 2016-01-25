@@ -44,6 +44,9 @@ if (!module.parent) {
     }
     
     var cwd = process.cwd();
+    
+    var os = require("os");
+	var hostname = os.hostname();
 
     var status = {
       openaps: {
@@ -57,6 +60,9 @@ if (!module.parent) {
         , reservoir: require(cwd + '/' + reservoir_input)
         , status: requireWithTimestamp(cwd + '/' + status_input)
       }
+      , host: {
+        hostname: hostname
+        }
     };
 
     console.log(JSON.stringify(status));
