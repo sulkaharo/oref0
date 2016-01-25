@@ -45,7 +45,7 @@ if (!module.parent) {
     }
 
     var cwd = process.cwd();
-
+    
     var hostname = 'unknown';
     try {
         hostname = os.hostname();
