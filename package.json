@@ -29,6 +29,7 @@
     "oref0-get-profile": "./bin/oref0-get-profile.js",
     "oref0-mint-max-iob": "./bin/oref0-mint-max-iob.sh",
     "oref0-ifttt-notify": "./bin/oref0-ifttt-notify",
+    "oref0-raw": "./bin/oref0-raw.js",
     "oref0-reset-usb": "bin/oref0-reset-usb.sh",
     "oref0-reset-git": "bin/oref0-reset-git.sh",
     "mm-format-ns-glucose": "./bin/mm-format-ns-glucose.sh",
@@ -43,8 +44,9 @@
     "ns-status": "./bin/ns-status.js",
     "nightscout": "./bin/nightscout.sh",
     "ns-dedupe-treatments": "./bin/ns-dedupe-treatments.sh",
-    "oref0-pebble": "./bin/oref0-pebble.js",
     "oref0-mm-format-ns-treatments": "./bin/oref0-mm-format-ns-treatments.js"
+    "oref0-html": "./bin/oref0-html.js",
+    "oref0-pebble": "./bin/oref0-pebble.js"
   },
   "homepage": "https://github.com/openaps/oref0",
   "dependencies": {

@@ -37,6 +37,15 @@ describe('determine-basal', function ( ) {
         output.reason.should.match(/BG 75<80/);
     });
 
+    it('should not extend temp to 0 when >20m left', function () {
+        var currenttemp = {"duration":27,"rate":0,"temp":"absolute"};
+        var glucose_status = {"delta":-5,"glucose":75,"avgdelta":-5};
+        var output = determine_basal(glucose_status, currenttemp, iob_data, profile, undefined, meal_data, setTempBasal);
+        //console.log(output);
+        (typeof output.rate).should.equal('undefined');
+        (typeof output.duration).should.equal('undefined');
+    });
+
     it('should do nothing when low and rising w/o IOB', function () {
         var glucose_status = {"delta":5,"glucose":75,"avgdelta":5};
         var output = determine_basal(glucose_status, currenttemp, iob_data, profile, undefined, meal_data, setTempBasal);
@@ -227,7 +236,7 @@ describe('determine-basal', function ( ) {
     });
 
     it('should do nothing when eventualBG < min_bg but appropriate low temp in progress', function () {
-        var glucose_status = {"delta":-3,"glucose":110,"avgdelta":-1};
+        var glucose_status = {"delta":-1,"glucose":110,"avgdelta":-1};
         var currenttemp = {"duration":20,"rate":0.25,"temp":"absolute"};
         var output = determine_basal(glucose_status, currenttemp, iob_data, profile, undefined, meal_data, setTempBasal);
         (typeof output.rate).should.equal('undefined');
@@ -267,6 +276,7 @@ describe('determine-basal', function ( ) {
         output.duration.should.equal(30);
         output.reason.should.match(/in range.*setting current basal/);
     });
+
 
     it('should low-temp when low and rising slower than BGI', function () {
         var glucose_status = {"delta":1,"glucose":85,"avgdelta":1};
@@ -424,7 +434,7 @@ describe('determine-basal', function ( ) {
         //console.log(output);
         //output.rate.should.equal(0);
         //output.duration.should.equal(0);
-        output.rate.should.equal(0.9);
+        output.rate.should.be.below(1.0);
         output.duration.should.equal(30);
     });
     
