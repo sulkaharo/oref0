@@ -44,7 +44,7 @@
     "ns-status": "./bin/ns-status.js",
     "nightscout": "./bin/nightscout.sh",
     "ns-dedupe-treatments": "./bin/ns-dedupe-treatments.sh",
-    "oref0-mm-format-ns-treatments": "./bin/oref0-mm-format-ns-treatments.js"
+    "oref0-mm-format-ns-treatments": "./bin/oref0-mm-format-ns-treatments.js",
     "oref0-html": "./bin/oref0-html.js",
     "oref0-pebble": "./bin/oref0-pebble.js"
   },
