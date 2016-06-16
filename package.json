@@ -54,12 +54,9 @@
   "dependencies": {
     "share2nightscout-bridge": "^0.1.5",
     "timezone": "0.0.47",
-<<<<<<< HEAD
 	"lodash": "^3.9.1",
     "moment": "2.10.6"
-=======
     "yargs": "~4.3.2"
->>>>>>> OFF/advanced-meal-assist
   },
   "devDependencies": {
     "mocha": "^2.3.3",
