@@ -55,7 +55,7 @@
     "share2nightscout-bridge": "^0.1.5",
     "timezone": "0.0.47",
 	"lodash": "^3.9.1",
-    "moment": "2.10.6"
+    "moment": "2.10.6",
     "yargs": "~4.3.2"
   },
   "devDependencies": {
