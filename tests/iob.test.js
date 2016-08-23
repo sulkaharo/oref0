@@ -10,18 +10,19 @@ describe('IOB', function ( ) {
       , timestamp = new Date(now).toISOString()
       , inputs = {
         clock: timestamp
-        , history: [{
-        _type: 'Bolus'
-        , amount: 1
-        , timestamp: timestamp
+        , history: [{type: 'Bolus'
+          , amount: 1
+          , start_at: timestamp
         }]
         , profile: {
-          dia: 3
-          , bolussnooze_dia_divisor: 2
+          dia: 3, bolussnooze_dia_divisor: 2
         }
       };
 
+	console.log("foo");
+	
     var rightAfterBolus = require('../lib/iob')(inputs)[0];
+    console.log(rightAfterBolus);
     rightAfterBolus.iob.should.equal(1);
     rightAfterBolus.bolussnooze.should.equal(1);
 
@@ -38,29 +39,7 @@ describe('IOB', function ( ) {
 
     afterDIA.iob.should.equal(0);
     afterDIA.bolussnooze.should.equal(0);
-  });
 
-  it('should snooze fast if bolussnooze_dia_divisor is high', function() {
-
-    var now = Date.now()
-      , timestamp = new Date(now).toISOString()
-      , inputs = {
-        clock: timestamp
-        , history: [{
-        _type: 'Bolus'
-        , amount: 1
-        , timestamp: timestamp
-        }]
-        , profile: {
-          dia: 3
-          , bolussnooze_dia_divisor: 10
-        }
-      };
-
-    var snoozeInputs = inputs;
-    snoozeInputs.clock = new Date(now + (20 * 60 * 1000)).toISOString();
-    var snooze = require('../lib/iob')(snoozeInputs)[0];
-    snooze.bolussnooze.should.equal(0);
   });
 
   it('should calculate IOB with Temp Basals', function() {
@@ -69,11 +48,13 @@ describe('IOB', function ( ) {
       , timestamp = new Date(now).toISOString()
       , timestampEarly = new Date(now - (30 * 60 * 1000)).toISOString()
       , inputs = {clock: timestamp,
-        history: [{_type: 'TempBasalDuration','duration (min)': 30, date: timestampEarly}
-        , {_type: 'TempBasal', rate: 2, date: timestampEarly, timestamp: timestampEarly}
-        , {_type: 'TempBasal', rate: 2, date: timestamp, timestamp: timestamp}
-        , {_type: 'TempBasalDuration','duration (min)': 30, date: timestamp}]
-        , profile: { dia: 3, current_basal: 1, bolussnooze_dia_divisor: 2}
+        history: [{type: 'TempBasal'
+        , start_at: timestampEarly
+        , end_at: timestamp
+        , amount: 1
+        , description: "TempBasal: 1.0U/hour over 30min"
+        }]
+		, profile: { dia: 3, bolussnooze_dia_divisor: 2}
       };
 
     var hourLaterInputs = inputs;
@@ -85,27 +66,28 @@ describe('IOB', function ( ) {
     
   });
 
-  it('should calculate IOB with Temp Basal events that overlap', function() {
+  // Assuming this is covered by mmhistorytools testing
+  // it('should calculate IOB with Temp Basal events that overlap', function() {
 
-    var now = Date.now()
-      , timestamp = new Date(now).toISOString()
-      , timestampEarly = new Date(now - 1).toISOString()
-      , inputs = {clock: timestamp,
-        history: [{_type: 'TempBasalDuration','duration (min)': 30, date: timestampEarly}
-        ,{_type: 'TempBasal', rate: 2, date: timestampEarly, timestamp: timestampEarly}
-        ,{_type: 'TempBasal', rate: 2, date: timestamp, timestamp: timestamp}
-		,{_type: 'TempBasalDuration','duration (min)': 30, date: timestamp}]
-		, profile: { dia: 3, current_basal: 1}
-      };
+    // var now = Date.now()
+      // , timestamp = new Date(now).toISOString()
+      // , timestampEarly = new Date(now - 1).toISOString()
+      // , inputs = {clock: timestamp,
+        // history: [{_type: 'TempBasalDuration','duration (min)': 30, date: timestampEarly}
+        // ,{_type: 'TempBasal', rate: 2, date: timestampEarly, timestamp: timestampEarly}
+        // ,{_type: 'TempBasal', rate: 2, date: timestamp, timestamp: timestamp}
+		// ,{_type: 'TempBasalDuration','duration (min)': 30, date: timestamp}]
+		// , profile: { dia: 3, current_basal: 1}
+      // };
 
-    var hourLaterInputs = inputs;
-    hourLaterInputs.clock = new Date(now + (60 * 60 * 1000)).toISOString();
-    var hourLater = require('../lib/iob')(hourLaterInputs)[0];
+    // var hourLaterInputs = inputs;
+    // hourLaterInputs.clock = new Date(now + (60 * 60 * 1000)).toISOString();
+    // var hourLater = require('../lib/iob')(hourLaterInputs)[0];
     
-    hourLater.iob.should.be.lessThan(1);
-    hourLater.iob.should.be.greaterThan(0);
+    // hourLater.iob.should.be.lessThan(1);
+    // hourLater.iob.should.be.greaterThan(0);
     
-  });
+  // });
 
   it('should calculate IOB with Temp Basals that are lower than base rate', function() {
 
@@ -113,11 +95,13 @@ describe('IOB', function ( ) {
       , timestamp = new Date(now).toISOString()
       , timestampEarly = new Date(now - (30 * 60 * 1000)).toISOString()
       , inputs = {clock: timestamp,
-        history: [{_type: 'TempBasalDuration','duration (min)': 30, date: timestampEarly}
-        , {_type: 'TempBasal', rate: 1, date: timestampEarly, timestamp: timestampEarly}
-        , {_type: 'TempBasal', rate: 1, date: timestamp, timestamp: timestamp}
-        , {_type: 'TempBasalDuration','duration (min)': 30, date: timestamp}]
-        , profile: { dia: 3, current_basal: 2, bolussnooze_dia_divisor: 2}
+        history: [{type: 'TempBasal'
+        , start_at: timestampEarly
+        , end_at: timestamp
+        , amount: -1
+        , description: "TempBasal: -1.0U/hour over 30min"
+        }]
+      , profile: { dia: 3 }
       };
 
     var hourLaterInputs = inputs;
@@ -129,23 +113,24 @@ describe('IOB', function ( ) {
     
   });
 
-  it('should show 0 IOB with Temp Basals if duration is not found', function() {
+  // Assuming this is covered by mmhistorytools testing
+  // it('should show 0 IOB with Temp Basals if duration is not found', function() {
 
-    var now = Date.now()
-      , timestamp = new Date(now).toISOString()
-      , timestampEarly = new Date(now - (60 * 60 * 1000)).toISOString()
-      , inputs = {
-        clock: timestamp
-        , history: [{_type: 'TempBasal', rate: 2, date: timestamp, timestamp: timestamp}]
-        , profile: {dia: 3, current_basal: 1, bolussnooze_dia_divisor: 2}
-      };
+    // var now = Date.now()
+      // , timestamp = new Date(now).toISOString()
+      // , timestampEarly = new Date(now - (60 * 60 * 1000)).toISOString()
+      // , inputs = {
+        // clock: timestamp
+        // , history: [{_type: 'TempBasal', rate: 2, date: timestamp, timestamp: timestamp}]
+        // , profile: {dia: 3,current_basal: 1}
+      // };
 
-    var hourLaterInputs = inputs;
-    hourLaterInputs.clock = new Date(now + (60 * 60 * 1000)).toISOString();
-    var hourLater = require('../lib/iob')(hourLaterInputs)[0];
+    // var hourLaterInputs = inputs;
+    // hourLaterInputs.clock = new Date(now + (60 * 60 * 1000)).toISOString();
+    // var hourLater = require('../lib/iob')(hourLaterInputs)[0];
     
-    hourLater.iob.should.equal(0);
-  });
+    // hourLater.iob.should.equal(0);
+  // });
 
   it('should show 0 IOB with Temp Basals if basal is percentage based', function() {
 
@@ -153,10 +138,14 @@ describe('IOB', function ( ) {
       , timestamp = new Date(now).toISOString()
       , timestampEarly = new Date(now - (60 * 60 * 1000)).toISOString()
       , inputs = {
-        clock: timestamp
-        , history: [{_type: 'TempBasal', temp: 'percent', rate: 2, date: timestamp, timestamp: timestamp},
-            {_type: 'TempBasalDuration','duration (min)': 30, date: timestamp}]
-        , profile: {dia: 3,current_basal: 1, bolussnooze_dia_divisor: 2}
+        clock: timestamp,
+          history: [{type: 'TempBasal'
+          , start_at: timestampEarly
+          , end_at: timestamp
+          , amount: 1
+          , description: "TempBasal: 200% over 30min"
+          }]
+        , profile: {dia: 3}
       };
 
 
@@ -175,13 +164,12 @@ describe('IOB', function ( ) {
       , inputs = {
         clock: timestamp
         , history: [{
-          _type: 'Bolus'
+          type: 'Bolus'
           , amount: 1
-          , timestamp: timestamp
+          , start_at: timestamp
         }]
         , profile: {
-          dia: 4
-          , bolussnooze_dia_divisor: 2
+          dia: 4, bolussnooze_dia_divisor: 2
         }
       };
 
